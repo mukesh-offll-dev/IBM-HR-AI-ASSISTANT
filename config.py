@@ -26,8 +26,12 @@ OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY", "").strip()
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "https://api.ollama.com").strip()
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gpt-oss:120b").strip()
 
+# Serverless Environment Detection (Vercel / AWS Lambda)
+IS_VERCEL = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+
 # Vector Store / RAG Settings
-CHROMA_PERSIST_DIRECTORY = os.getenv("CHROMA_PERSIST_DIRECTORY", str(BASE_DIR / "chroma_db"))
+DEFAULT_CHROMA_DIR = "/tmp/chroma_db" if IS_VERCEL else str(BASE_DIR / "chroma_db")
+CHROMA_PERSIST_DIRECTORY = os.getenv("CHROMA_PERSIST_DIRECTORY", DEFAULT_CHROMA_DIR)
 CHROMA_COLLECTION_NAME = os.getenv("CHROMA_COLLECTION_NAME", "hr_job_descriptions")
 RAG_TOP_K = int(os.getenv("RAG_TOP_K", "4"))
 RAG_CHUNK_SIZE = int(os.getenv("RAG_CHUNK_SIZE", "700"))
@@ -38,9 +42,17 @@ HOST = os.getenv("HOST", "127.0.0.1")
 PORT = int(os.getenv("PORT", "8000"))
 MCP_SERVER_PORT = int(os.getenv("MCP_SERVER_PORT", "8001"))
 
-# Safe Uploads Directory (transient storage)
-TEMP_UPLOAD_DIR = BASE_DIR / "temp_resumes"
-TEMP_UPLOAD_DIR.mkdir(exist_ok=True)
+# Safe Uploads Directory (transient storage in /tmp on serverless)
+if IS_VERCEL:
+    TEMP_UPLOAD_DIR = Path("/tmp/temp_resumes")
+else:
+    TEMP_UPLOAD_DIR = BASE_DIR / "temp_resumes"
+
+try:
+    TEMP_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+except Exception as e:
+    logger.warning(f"Could not create temp directory: {e}. Using /tmp directly.")
+    TEMP_UPLOAD_DIR = Path("/tmp")
 
 
 # LangChain Custom LLM Wrapper for Ollama Cloud

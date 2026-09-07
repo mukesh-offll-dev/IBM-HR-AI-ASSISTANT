@@ -7,10 +7,12 @@ import json
 import sqlite3
 from pathlib import Path
 from typing import Dict, Any, List, Optional
-from config import BASE_DIR, logger
+from config import BASE_DIR, IS_VERCEL, logger
 
-
-DB_PATH = BASE_DIR / "sessions.db"
+if IS_VERCEL:
+    DB_PATH = Path("/tmp/sessions.db")
+else:
+    DB_PATH = BASE_DIR / "sessions.db"
 
 
 class RecruitmentSession:

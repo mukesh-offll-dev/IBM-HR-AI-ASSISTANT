@@ -37,10 +37,16 @@ def extract_text_from_file(file_path: Union[str, Path]) -> str:
     text = ""
 
     if suffix == ".pdf":
-        doc = fitz.open(str(path))
-        for page in doc:
-            text += page.get_text() + "\n"
-        doc.close()
+        try:
+            doc = fitz.open(str(path))
+            for page in doc:
+                text += page.get_text() + "\n"
+            doc.close()
+        except Exception:
+            import pypdf
+            reader = pypdf.PdfReader(str(path))
+            for page in reader.pages:
+                text += (page.extract_text() or "") + "\n"
     elif suffix == ".docx":
         doc = docx.Document(str(path))
         for p in doc.paragraphs:
