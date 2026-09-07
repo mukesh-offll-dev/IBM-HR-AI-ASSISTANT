@@ -5,5 +5,11 @@
       "source": "/(.*)",
       "destination": "/api/index.py"
     }
-  ]
+  ],
+  "functions": {
+    "api/index.py": {
+      "includeFiles": "sample_data/**",
+      "maxDuration": 60
+    }
+  }
 }

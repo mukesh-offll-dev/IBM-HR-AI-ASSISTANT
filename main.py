@@ -1106,10 +1106,14 @@ HTML_DASHBOARD = """<!DOCTYPE html>
           body: formData
         });
         const data = await res.json();
-        status.innerText = `Screened ${data.processed || files.length} resume(s) successfully!`;
+        if (!res.ok) {
+          throw new Error(data.detail || data.error || `Server error (${res.status})`);
+        }
+        status.innerText = `Screened ${data.processed || 0} resume(s) successfully!`;
         await refreshState();
       } catch (err) {
-        status.innerText = `Error: ${err.message}`;
+        status.innerText = `Notice: ${err.message}`;
+        console.error("Upload error:", err);
       }
     }
 
@@ -1120,10 +1124,14 @@ HTML_DASHBOARD = """<!DOCTYPE html>
       try {
         const res = await fetch('/api/resumes/load-samples', { method: 'POST' });
         const data = await res.json();
-        status.innerText = "Sample candidates loaded!";
+        if (!res.ok) {
+          throw new Error(data.detail || data.error || `Server error (${res.status})`);
+        }
+        status.innerText = `Loaded ${data.loaded || 3} sample candidates!`;
         await refreshState();
       } catch (err) {
-        status.innerText = `Error: ${err.message}`;
+        status.innerText = `Notice: ${err.message}`;
+        console.error("Sample load error:", err);
       }
     }
 
@@ -1269,45 +1277,120 @@ async def upload_job_description(payload: JDUploadRequest):
     }
 
 
+# Built-in sample candidate data fallback for serverless deployments
+SAMPLE_CANDIDATES_DATA = [
+    {
+        "name": "Alex Morgan",
+        "email": "alex.morgan@email.com",
+        "phone": "+1 (555) 234-5678",
+        "title": "Senior AI & Backend Engineer",
+        "skills": [
+            "Python", "FastAPI", "LangChain", "LangGraph", "ChromaDB",
+            "FAISS", "Model Context Protocol (MCP)", "Docker", "AWS", "CI/CD", "PostgreSQL", "REST APIs"
+        ],
+        "years_of_experience": 6.0,
+        "education": ["B.S. in Computer Science - University of Washington (2019)"],
+        "certifications": ["AWS Certified Solutions Architect", "LangChain Developer Certification"],
+        "past_roles": [
+            {
+                "role": "Senior AI Engineer",
+                "company": "CloudTech Solutions",
+                "duration": "2022 - Present",
+                "key_achievements": "Architected multi-agent system using LangGraph and FastAPI with Chroma vector DB."
+            },
+            {
+                "role": "Backend Engineer",
+                "company": "DataStream Inc.",
+                "duration": "2019 - 2022",
+                "key_achievements": "Developed Python backend services handling 10M+ daily events. Docker and AWS ECS."
+            }
+        ],
+        "raw_summary": "Senior Software Engineer with 6 years experience building enterprise Python microservices, LLM agent workflows using LangChain and LangGraph, and RAG pipelines with ChromaDB."
+    },
+    {
+        "name": "Priya Sharma",
+        "email": "priya.sharma@email.com",
+        "phone": "+1 (555) 876-5432",
+        "title": "Backend Python Developer",
+        "skills": [
+            "Python", "Django", "FastAPI", "PostgreSQL", "Redis",
+            "Git", "Docker", "Unit Testing", "Pandas", "Scikit-Learn"
+        ],
+        "years_of_experience": 3.5,
+        "education": ["B.Tech in Information Technology - Anna University (2021)"],
+        "certifications": ["Python Certified Associate Programmer (PCAP)"],
+        "past_roles": [
+            {
+                "role": "Backend Developer",
+                "company": "FinTech Labs",
+                "duration": "2021 - Present",
+                "key_achievements": "Designed relational database schemas and REST APIs using Django REST Framework."
+            }
+        ],
+        "raw_summary": "Backend developer with 3.5 years of experience specializing in Django, PostgreSQL, and REST API development."
+    },
+    {
+        "name": "Marcus Vance",
+        "email": "marcus.vance@email.com",
+        "phone": "+1 (555) 345-9876",
+        "title": "Junior Frontend Web Developer",
+        "skills": [
+            "JavaScript", "React.js", "HTML5", "CSS3", "Tailwind CSS",
+            "Git", "REST APIs", "Python (Basics)", "Figma"
+        ],
+        "years_of_experience": 1.5,
+        "education": ["B.A. in Digital Arts & Design - Portland State University (2023)"],
+        "certifications": ["Meta Front-End Developer Professional Certificate"],
+        "past_roles": [
+            {
+                "role": "Junior Frontend Developer",
+                "company": "Creative Agency",
+                "duration": "2023 - Present",
+                "key_achievements": "Built responsive landing pages and client dashboards using React and Tailwind CSS."
+            }
+        ],
+        "raw_summary": "Frontend developer with 1.5 years of experience building modern user interfaces using React, JavaScript, HTML5, and CSS."
+    }
+]
+
+
 @app.post("/api/resumes/upload")
 async def upload_resumes(files: List[UploadFile] = File(...)):
-    """Accepts multiple resume files (PDF/DOCX/TXT) and parses them into structured JSON."""
+    """Accepts multiple resume files (PDF/DOCX/TXT) and parses them in-memory without disk writes."""
     processed = []
+    errors = []
     for file in files:
-        temp_file = TEMP_UPLOAD_DIR / file.filename
         try:
-            with open(temp_file, "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
+            content_bytes = await file.read()
+            if not content_bytes:
+                continue
 
-            # Invoke LangGraph resume screening branch
-            result = execute_agent_workflow(
-                intent="screen_resume",
-                target_resume_path=str(temp_file)
+            # Directly parse from in-memory bytes without writing to disk
+            cand = parse_resume(
+                file_path_or_bytes_or_text=content_bytes,
+                filename=file.filename or "resume.pdf"
             )
-            cand = result.get("current_candidate_parsed")
             if cand:
                 session_manager.add_candidate(cand)
                 processed.append(cand.get("name", file.filename))
         except Exception as e:
             logger.error(f"Error parsing uploaded file {file.filename}: {e}")
-        finally:
-            # Privacy cleanup: delete temporary uploaded file
-            if temp_file.exists():
-                try:
-                    os.remove(temp_file)
-                except Exception:
-                    pass
+            errors.append(f"{file.filename}: {str(e)}")
+
+    if not processed and errors:
+        raise HTTPException(status_code=400, detail=f"Could not parse resume: {'; '.join(errors)}")
 
     return {
         "status": "success",
         "processed": len(processed),
-        "candidates": processed
+        "candidates": processed,
+        "errors": errors
     }
 
 
 @app.post("/api/resumes/load-samples")
 async def load_sample_candidates():
-    """Loads and parses the 3 generated sample resumes (Alex, Priya, Marcus)."""
+    """Loads and parses the 3 generated sample resumes, with instant fallback."""
     samples_dir = BASE_DIR / "sample_data"
     sample_files = [
         samples_dir / "alex_morgan_resume.pdf",
@@ -1323,7 +1406,14 @@ async def load_sample_candidates():
                 session_manager.add_candidate(cand)
                 loaded.append(cand.get("name", sf.name))
             except Exception as e:
-                logger.error(f"Error loading sample {sf.name}: {e}")
+                logger.warning(f"Notice parsing file {sf.name}: {e}")
+
+    # Fallback if serverless runtime did not package binary documents
+    if not loaded:
+        logger.info("Using embedded candidate profiles fallback for serverless environment.")
+        for profile in SAMPLE_CANDIDATES_DATA:
+            session_manager.add_candidate(profile)
+            loaded.append(profile["name"])
 
     return {
         "status": "success",
