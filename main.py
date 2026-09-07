@@ -1215,6 +1215,10 @@ HTML_DASHBOARD = """<!DOCTYPE html>
 
 # API Endpoints
 @app.get("/", response_class=HTMLResponse)
+@app.get("/api", response_class=HTMLResponse)
+@app.get("/api/index", response_class=HTMLResponse)
+@app.get("/api/index.py", response_class=HTMLResponse)
+@app.get("/index", response_class=HTMLResponse)
 async def get_index():
     """Serves the main recruiter dashboard UI."""
     return HTML_DASHBOARD
