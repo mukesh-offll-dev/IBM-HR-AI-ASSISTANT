@@ -1,0 +1,28 @@
+Job Title: Senior Backend AI Engineer
+Department: Engineering / AI Solutions
+Location: Remote / Hybrid
+Experience Required: 4-7 Years
+
+Company Overview:
+We are building state-of-the-art enterprise AI workflows, LLM agents, and automated knowledge pipelines. We are seeking a Senior Backend AI Engineer to lead development of agentic architectures, microservices, and RAG pipelines.
+
+Key Responsibilities:
+- Design, build, and deploy agentic AI workflows using LangChain, LangGraph, and tool-calling frameworks.
+- Implement robust RAG (Retrieval-Augmented Generation) architectures with vector databases (Chroma, FAISS, Pinecone) and semantic search.
+- Develop high-performance backend microservices with Python, FastAPI, and asynchronous message queues.
+- Integrate Model Context Protocol (MCP) and third-party AI APIs.
+- Build automated testing suites, CI/CD pipelines, and monitor LLM latency, cost, and reliability.
+- Collaborate with frontend engineers to deliver intuitive AI-driven user experiences.
+
+Requirements & Qualifications:
+- 4+ years of professional backend software engineering with Python (FastAPI, Flask, or Django).
+- Proven hands-on experience developing LLM applications with LangChain or LangGraph.
+- Deep understanding of Vector DBs (Chroma, FAISS, Qdrant) and chunking/embedding strategies.
+- Experience with Docker, Git, RESTful APIs, and cloud deployments (AWS, GCP, or Azure).
+- Bachelor's or Master's degree in Computer Science, Software Engineering, or related technical discipline.
+- Strong problem-solving skills, code quality emphasis, and excellent communication.
+
+Nice-to-Have:
+- Experience with Model Context Protocol (MCP) servers and clients.
+- Experience with local LLM runtimes (Ollama, vLLM) and quantization.
+- Familiarity with Kubernetes, Redis, and observability platforms (LangSmith, OpenTelemetry).
