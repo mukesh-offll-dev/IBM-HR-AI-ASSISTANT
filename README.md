@@ -1,4 +1,4 @@
-# AI HR Recruitment Assistant ⚡
+[ AI HR Recruitment Assistant ⚡](https://agentic-ai-hr-assistant.vercel.app/)
 
 > **Final Project — TNSDC Virtual Internship Program (IBM Agentic AI Track)**  
 > An autonomous Agentic AI application for candidate screening, semantic job description matching, candidate ranking, and tailored interview question generation.
