@@ -133,8 +133,8 @@ IBM_HR_assistant/
 ### 2. Installation
 Clone the repository and install the dependencies:
 ```bash
-git clone https://github.com/your-username/IBM_HR_assistant.git
-cd IBM_HR_assistant
+git clone https://github.com/mukesh-offll-dev/IBM-HR-AI-ASSISTANT.git
+cd IBM-HR-AI-ASSISTANT
 pip install -r requirements.txt
 ```
 
@@ -203,7 +203,7 @@ Add the following to your `claude_desktop_config.json`:
   "mcpServers": {
     "hr-recruitment-assistant": {
       "command": "python",
-      "args": ["d:/project works/IBM_HR_assistant/mcp/server.py"],
+      "args": ["path/to/IBM-HR-AI-ASSISTANT/mcp/server.py"],
       "env": {
         "OLLAMA_API_KEY": "your_ollama_cloud_api_key_here"
       }
